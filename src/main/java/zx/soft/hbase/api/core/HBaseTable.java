@@ -17,19 +17,16 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import zx.soft.hbase.api.utils.ObjectTrans;
 import zx.soft.utils.config.ConfigUtil;
 
 public class HBaseTable {
 
-	private static HTableInterface table;
+	private HTableInterface table;
 	private HConnection conn;
 	private String tableName;
 	private static Configuration conf;
-	public static Logger logger = LoggerFactory.getLogger(HBaseTable.class);
 
 	static {
 		Properties prop = ConfigUtil.getProps("zookeeper.properties");
@@ -131,7 +128,7 @@ public class HBaseTable {
 	}
 
 	/**
-	 * 关闭表
+	 * 关闭表和连接
 	 */
 	public void close() {
 		try {
