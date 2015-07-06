@@ -8,9 +8,16 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MasterNotRunningException;
+<<<<<<< HEAD
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+=======
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+>>>>>>> 6426bd18e964407bacb0c7e0bce3a347edad865e
 
 import zx.soft.utils.config.ConfigUtil;
 
@@ -20,6 +27,10 @@ public class HBaseClient {
 
 	private static HBaseAdmin hbaseAdmin;
 	private static Configuration conf;
+<<<<<<< HEAD
+=======
+	public static Logger logger = LoggerFactory.getLogger(HBaseClient.class);
+>>>>>>> 6426bd18e964407bacb0c7e0bce3a347edad865e
 
 	static {
 		Properties prop = ConfigUtil.getProps("zookeeper.properties");
@@ -43,8 +54,12 @@ public class HBaseClient {
 	public boolean createTable(String tableName, String[] columnFamilys) throws IOException {
 		boolean success = false;
 		if (!(hbaseAdmin.tableExists(tableName))) {
+<<<<<<< HEAD
 			TableName name = TableName.valueOf(tableName);
 			HTableDescriptor tableDescriptor = new HTableDescriptor(name);
+=======
+			HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
+>>>>>>> 6426bd18e964407bacb0c7e0bce3a347edad865e
 			for (String columnFamily : columnFamilys) {
 				tableDescriptor.addFamily(new HColumnDescriptor(columnFamily));
 			}
@@ -84,10 +99,13 @@ public class HBaseClient {
 		return deleted;
 	}
 
+<<<<<<< HEAD
 	/**
 	 * 关闭hbaseAdmin
 	 * @throws IOException
 	 */
+=======
+>>>>>>> 6426bd18e964407bacb0c7e0bce3a347edad865e
 	public void close() throws IOException {
 		hbaseAdmin.close();
 	}
