@@ -17,6 +17,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
+
 import zx.soft.hbase.api.utils.ObjectTrans;
 import zx.soft.utils.config.ConfigUtil;
 
@@ -74,23 +75,26 @@ public class HBaseTable {
 	}
 
 	/**
-	 * 查询指定rowKey的行的所有属性值
+	 * 获得指定rowKey的对象
 	 * @param rowKey
+	 * @param cls
 	 * @return
 	 * @throws IOException
+	 * @throws InstantiationException
+	 * @throws IllegalAccessException
+	 * @throws NoSuchFieldException
+	 * @throws SecurityException
 	 */
-	public List<String> get(String rowKey) throws IOException {
-		List<String> list = new ArrayList<>();
-		Get get = new Get(rowKey.getBytes());
+	public <T> T getObject(String rowKey, Class<T> cls) throws IOException, InstantiationException,
+	IllegalAccessException, NoSuchFieldException, SecurityException {
+		Get get = new Get(Bytes.toBytes(rowKey));
 		Result result = table.get(get);
-		if (ObjectTrans.Result2StringList(result) != null) {
-			list = ObjectTrans.Result2StringList(result);
-		}
-		return list;
+		T t = ObjectTrans.Result2Object(result, cls);
+		return t;
 	}
 
 	/**
-	 * 获取指定rowKey，列族，标识符的值value
+	 * 获取指定rowKey，列族，标识符的值value，一般用于查询对象的某个字段的值
 	 * @param rowKey
 	 * @param family
 	 * @param qualifier
@@ -106,7 +110,7 @@ public class HBaseTable {
 	}
 
 	/**
-	 * 删除rowKey的行
+	 * 删除指定rowKey的行
 	 * @param rowKey
 	 * @throws IOException
 	 */
@@ -116,13 +120,15 @@ public class HBaseTable {
 	}
 
 	//扫描表
-	public List<String> scan() throws IOException {
+	public <T> List<T> scan(Class<T> cls) throws IOException, InstantiationException, NoSuchFieldException,
+	SecurityException, IllegalAccessException {
 		Scan scan = new Scan();
-		List<String> list = new ArrayList<>();
+		List<T> list = new ArrayList<>();
 		ResultScanner results = table.getScanner(scan);
 		for (Result result : results) {
-			list.addAll(ObjectTrans.Result2StringList(result));
+			list.add(ObjectTrans.Result2Object(result, cls));
 		}
+		results.close();
 		return list;
 	}
 

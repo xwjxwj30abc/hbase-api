@@ -3,13 +3,14 @@ package zx.soft.hbase.api.core;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
+
+import zx.soft.hbase.api.examples.UserInfo;
 
 import com.google.protobuf.ServiceException;
 
@@ -30,8 +31,6 @@ public class HBaseTableTest {
 		hbaseTable.put("user1", "UserInfo", "age", 143616867, "33");
 		hbaseTable.put("user1", "UserInfo", "address", 143616867, "安徽合肥");
 		hbaseTable.put("user2", "UserInfo", "id", 143616860, "222");
-		List<String> ss = hbaseTable.get("user1");
-		assertEquals(4, ss.size());
 		hbaseTable.close();
 	}
 
@@ -51,19 +50,33 @@ public class HBaseTableTest {
 	}
 
 	@Test
-	public void test3DeleteRowKey() throws IOException {
+	public void test2getObject() throws IOException, InstantiationException, IllegalAccessException,
+	NoSuchFieldException, SecurityException {
+		hbaseTable = new HBaseTable(tableName);
+		UserInfo expected = new UserInfo();
+		expected.setId("111");
+		expected.setNickname("nickname");
+		expected.setAge(33);
+		expected.setAddress("安徽合肥");
+		UserInfo actual = hbaseTable.getObject("user1", UserInfo.class);
+		assertEquals(expected, actual);
+	}
+
+	@Test
+	public void test3DeleteRowKey() throws IOException, InstantiationException, IllegalAccessException,
+	NoSuchFieldException, SecurityException {
 		hbaseTable = new HBaseTable(tableName);
 		hbaseTable.delete("user2");
-		assertEquals(0, hbaseTable.get("user2").size());
+		assertEquals(new UserInfo(), hbaseTable.getObject("user2", UserInfo.class));
 		hbaseTable.close();
 	}
 
 	@Test
 	public void test4Scan() throws MasterNotRunningException, ZooKeeperConnectionException, IOException,
-	ServiceException {
+			ServiceException, InstantiationException, NoSuchFieldException, SecurityException, IllegalAccessException {
 		HBaseClient hbaseClient = new HBaseClient();
 		hbaseTable = new HBaseTable(tableName);
-		assertEquals(4, hbaseTable.scan().size());
+		assertEquals(1, hbaseTable.scan(UserInfo.class).size());
 		hbaseTable.close();
 		hbaseClient.deleteTable(tableName);
 		hbaseClient.close();

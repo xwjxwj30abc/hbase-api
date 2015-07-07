@@ -1,6 +1,6 @@
 package zx.soft.hbase.api.utils;
 
-import java.util.ArrayList;
+import java.lang.reflect.Field;
 import java.util.List;
 
 import org.apache.hadoop.hbase.Cell;
@@ -9,22 +9,30 @@ import org.apache.hadoop.hbase.client.Result;
 
 public class ObjectTrans {
 
-	public static List<String> Result2StringList(Result result) {
+	//将hbase　Get结果Result转换为T类的对象
+	public static <T> T Result2Object(Result result, Class<T> cls) throws InstantiationException, NoSuchFieldException,
+			SecurityException, IllegalAccessException {
+
 		List<Cell> cells = result.listCells();
-		List<String> list = new ArrayList<>();
-		String row = null;
-		String family = null;
+		T object = cls.newInstance();
 		String qualifier = null;
 		String value = null;
+
 		if (cells != null) {
 			for (Cell cell : cells) {
-				row = new String(CellUtil.cloneRow(cell));
-				family = new String(CellUtil.cloneFamily(cell));
 				qualifier = new String(CellUtil.cloneQualifier(cell));
 				value = new String(CellUtil.cloneValue(cell));
-				list.add(row + "    " + family + ":" + qualifier + "    " + cell.getTimestamp() + "    " + value);
+				Field field = object.getClass().getDeclaredField(qualifier);
+				field.setAccessible(true);
+				if (field.getType() == Integer.class || field.getType() == int.class) {
+					field.set(object, Integer.valueOf(value));
+				} else if (field.getType() == Long.class || field.getType() == long.class) {
+					field.set(object, Long.valueOf(value));
+				} else {
+					field.set(object, value);
+				}
 			}
 		}
-		return list;
+		return object;
 	}
 }
