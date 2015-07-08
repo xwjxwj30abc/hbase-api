@@ -1,12 +1,10 @@
 package zx.soft.hbase.api.core;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HConnection;
@@ -16,30 +14,22 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.BinaryComparator;
+import org.apache.hadoop.hbase.filter.CompareFilter;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.RowFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import zx.soft.hbase.api.utils.ObjectTrans;
-import zx.soft.utils.config.ConfigUtil;
 
 public class HBaseTable {
 
 	private HTableInterface table;
 	private HConnection conn;
-	private String tableName;
-	private static Configuration conf;
-
-	static {
-		Properties prop = ConfigUtil.getProps("zookeeper.properties");
-		//在classpath下查找hbase-site.xml文件，如果不存在，则使用默认的hbase-core.xml文件
-		conf = HBaseConfiguration.create();
-		conf.set("hbase.zookeeper.quorum", prop.getProperty("hbase.zookeeper.quorum"));
-		conf.set("hbase.zookeeper.property.clientPort", prop.getProperty("hbase.zookeeper.property.clientPort"));
-	}
 
 	public HBaseTable(String tableName) throws IOException {
-		this.tableName = tableName;
-		conn = HConnectionManager.createConnection(conf);
-		table = conn.getTable(this.tableName);
+		conn = HConnectionManager.createConnection(HBaseConfig.getZookeeperConf());
+		table = conn.getTable(tableName);
 	}
 
 	/**
@@ -70,6 +60,27 @@ public class HBaseTable {
 	public void put(String rowKey, String family, String qualifer, long ts, String value) throws IOException {
 		Put put = new Put(Bytes.toBytes(rowKey));
 		put.add(Bytes.toBytes(family), Bytes.toBytes(qualifer), ts, Bytes.toBytes(value));
+		table.put(put);
+		table.flushCommits();
+	}
+
+	/**
+	 * 插入行到数据表中
+	 * @param rowKey
+	 * @param family
+	 * @param t　　插入的对象
+	 * @throws InstantiationException
+	 * @throws IllegalAccessException
+	 * @throws IOException
+	 */
+	public <T> void putObject(String rowKey, String family, T t) throws InstantiationException, IllegalAccessException,
+	IOException {
+		Field[] fields = t.getClass().getDeclaredFields();
+		Put put = new Put(Bytes.toBytes(rowKey));
+		for (Field field : fields) {
+			field.setAccessible(true);
+			put.add(Bytes.toBytes(family), Bytes.toBytes(field.getName()), field.get(t).toString().getBytes());
+		}
 		table.put(put);
 		table.flushCommits();
 	}
@@ -119,11 +130,58 @@ public class HBaseTable {
 		table.delete(delete);
 	}
 
-	//扫描表
+	/**
+	 * 扫描表
+	 * @param cls
+	 * @return
+	 * @throws IOException
+	 * @throws InstantiationException
+	 * @throws NoSuchFieldException
+	 * @throws SecurityException
+	 * @throws IllegalAccessException
+	 */
 	public <T> List<T> scan(Class<T> cls) throws IOException, InstantiationException, NoSuchFieldException,
 	SecurityException, IllegalAccessException {
-		Scan scan = new Scan();
 		List<T> list = new ArrayList<>();
+		Scan scan = new Scan();
+		ResultScanner results = table.getScanner(scan);
+		for (Result result : results) {
+			list.add(ObjectTrans.Result2Object(result, cls));
+		}
+		results.close();
+		return list;
+	}
+
+	/**
+	 * 返回行键比较的结果
+	 * @param rowKey
+	 * @param compareOp -2代表小于，-1代表小于等于，０代表等于，１代表大于等于，２代表大于
+	 * @param cls
+	 * @return
+	 * @throws IOException
+	 * @throws InstantiationException
+	 * @throws NoSuchFieldException
+	 * @throws SecurityException
+	 * @throws IllegalAccessException
+	 */
+	public <T> List<T> scan(String rowKey, int compareOp, Class<T> cls) throws IOException, InstantiationException,
+	NoSuchFieldException, SecurityException, IllegalAccessException {
+		List<T> list = new ArrayList<>();
+		Filter filter = null;
+		if (compareOp == -2) {
+			filter = new RowFilter(CompareFilter.CompareOp.LESS, new BinaryComparator(Bytes.toBytes(rowKey)));
+		} else if (compareOp == -1) {
+			filter = new RowFilter(CompareFilter.CompareOp.LESS_OR_EQUAL, new BinaryComparator(Bytes.toBytes(rowKey)));
+		} else if (compareOp == 0) {
+			filter = new RowFilter(CompareFilter.CompareOp.EQUAL, new BinaryComparator(Bytes.toBytes(rowKey)));
+		} else if (compareOp == 1) {
+			filter = new RowFilter(CompareFilter.CompareOp.GREATER_OR_EQUAL,
+					new BinaryComparator(Bytes.toBytes(rowKey)));
+		} else if (compareOp == 2) {
+			filter = new RowFilter(CompareFilter.CompareOp.GREATER, new BinaryComparator(Bytes.toBytes(rowKey)));
+		}
+		Scan scan = new Scan();
+		scan.setFilter(filter);
 		ResultScanner results = table.getScanner(scan);
 		for (Result result : results) {
 			list.add(ObjectTrans.Result2Object(result, cls));

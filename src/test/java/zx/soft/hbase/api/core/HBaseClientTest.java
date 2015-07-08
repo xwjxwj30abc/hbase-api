@@ -18,7 +18,7 @@ import com.google.protobuf.ServiceException;
 public class HBaseClientTest {
 
 	HBaseClient hbaseClient;
-	String tableName = "SinaInfo";
+	String tableName = "SinaInfo2";
 
 	@Before
 	public void getConf() throws MasterNotRunningException, ZooKeeperConnectionException, IOException, ServiceException {
@@ -27,7 +27,7 @@ public class HBaseClientTest {
 
 	@Test
 	public void test1CreateTable() throws IOException {
-		String[] columnFamily = { "UserInfo" };
+		String[] columnFamily = { "UserInfo2" };
 		assertTrue(hbaseClient.createTable(tableName, columnFamily));
 	}
 

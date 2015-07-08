@@ -60,11 +60,29 @@ public class HBaseTableTest {
 		expected.setAddress("安徽合肥");
 		UserInfo actual = hbaseTable.getObject("user1", UserInfo.class);
 		assertEquals(expected, actual);
+		hbaseTable.close();
+	}
+
+	@Test
+	public void test3PutObject() throws InstantiationException, IllegalAccessException, IOException, ServiceException,
+	NoSuchFieldException, SecurityException {
+		HBaseClient hbaseClient = new HBaseClient();
+		hbaseTable = new HBaseTable(tableName);
+		UserInfo put = new UserInfo();
+		put.setId("333");
+		put.setNickname("nickname33");
+		put.setAge(13);
+		put.setAddress("合肥");
+		hbaseTable.putObject("user3", "UserInfo", put);
+		UserInfo get = hbaseTable.getObject("user3", UserInfo.class);
+		assertEquals(put, get);
+		hbaseTable.close();
+		hbaseClient.close();
 	}
 
 	@Test
 	public void test3DeleteRowKey() throws IOException, InstantiationException, IllegalAccessException,
-	NoSuchFieldException, SecurityException {
+			NoSuchFieldException, SecurityException {
 		hbaseTable = new HBaseTable(tableName);
 		hbaseTable.delete("user2");
 		assertEquals(new UserInfo(), hbaseTable.getObject("user2", UserInfo.class));
@@ -73,11 +91,34 @@ public class HBaseTableTest {
 
 	@Test
 	public void test4Scan() throws MasterNotRunningException, ZooKeeperConnectionException, IOException,
-			ServiceException, InstantiationException, NoSuchFieldException, SecurityException, IllegalAccessException {
-		HBaseClient hbaseClient = new HBaseClient();
+	ServiceException, InstantiationException, NoSuchFieldException, SecurityException, IllegalAccessException {
 		hbaseTable = new HBaseTable(tableName);
-		assertEquals(1, hbaseTable.scan(UserInfo.class).size());
+		assertEquals(2, hbaseTable.scan(UserInfo.class).size());
 		hbaseTable.close();
+	}
+
+	@Test
+	public void test5ScanFilter() throws MasterNotRunningException, ZooKeeperConnectionException, IOException,
+			ServiceException, InstantiationException, NoSuchFieldException, SecurityException, IllegalAccessException {
+		hbaseTable = new HBaseTable(tableName);
+		UserInfo put = new UserInfo();
+		put.setId("444");
+		put.setNickname("nickname4");
+		put.setAge(23);
+		put.setAddress("天津");
+		hbaseTable.putObject("user4", "UserInfo", put);
+		assertEquals(1, hbaseTable.scan("user3", -2, UserInfo.class).size());
+		assertEquals(2, hbaseTable.scan("user3", -1, UserInfo.class).size());
+		assertEquals(1, hbaseTable.scan("user3", 0, UserInfo.class).size());
+		assertEquals(2, hbaseTable.scan("user3", 1, UserInfo.class).size());
+		assertEquals(1, hbaseTable.scan("user3", 2, UserInfo.class).size());
+		hbaseTable.close();
+	}
+
+	@Test
+	public void test6close() throws MasterNotRunningException, ZooKeeperConnectionException, IOException,
+			ServiceException {
+		HBaseClient hbaseClient = new HBaseClient();
 		hbaseClient.deleteTable(tableName);
 		hbaseClient.close();
 	}

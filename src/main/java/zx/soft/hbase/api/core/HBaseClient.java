@@ -1,10 +1,7 @@
 package zx.soft.hbase.api.core;
 
 import java.io.IOException;
-import java.util.Properties;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MasterNotRunningException;
@@ -12,40 +9,27 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 
-
-import zx.soft.utils.config.ConfigUtil;
-
 import com.google.protobuf.ServiceException;
 
 public class HBaseClient {
 
 	private static HBaseAdmin hbaseAdmin;
-	private static Configuration conf;
-
-	static {
-		Properties prop = ConfigUtil.getProps("zookeeper.properties");
-		//在classpath下查找hbase-site.xml文件，如果不存在，则使用默认的hbase-core.xml文件
-		conf = HBaseConfiguration.create();
-		conf.set("hbase.zookeeper.quorum", prop.getProperty("hbase.zookeeper.quorum"));
-		conf.set("hbase.zookeeper.property.clientPort", prop.getProperty("hbase.zookeeper.property.clientPort"));
-	}
 
 	public HBaseClient() throws MasterNotRunningException, ZooKeeperConnectionException, IOException, ServiceException {
-		hbaseAdmin = new HBaseAdmin(conf);
-		HBaseAdmin.checkHBaseAvailable(conf);
+		hbaseAdmin = new HBaseAdmin(HBaseConfig.getZookeeperConf());
+		HBaseAdmin.checkHBaseAvailable(HBaseConfig.getZookeeperConf());
 	}
 
 	/**
-	 * 通过表名和列族创建表
-	 * @param tableName
-	 * @param columnFamilys
+	 * 创建表，默认版本数量是无限
+	 * @param tableName　表名
+	 * @param columnFamilys　列族
 	 * @throws IOException
 	 */
-	public boolean createTable(String tableName, String[] columnFamilys) throws IOException {
+	public boolean createTable(String tableName, String... columnFamilys) throws IOException {
 		boolean success = false;
 		if (!(hbaseAdmin.tableExists(tableName))) {
-			TableName name = TableName.valueOf(tableName);
-			HTableDescriptor tableDescriptor = new HTableDescriptor(name);
+			HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(tableName));
 			for (String columnFamily : columnFamilys) {
 				tableDescriptor.addFamily(new HColumnDescriptor(columnFamily));
 			}
@@ -55,6 +39,30 @@ public class HBaseClient {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+		}
+		return success;
+	}
+
+	/**
+	 * 创建表
+	 * @param tableName　表名
+	 * @param maxVersion　　版本数
+	 * @param columnFamilys　列族
+	 * @return
+	 */
+	public boolean createTable(String tableName, int maxVersion, String... columnFamilys) {
+		boolean success = false;
+		HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(tableName));
+		for (String columnFamily : columnFamilys) {
+			HColumnDescriptor coldef = new HColumnDescriptor(columnFamily);
+			coldef.setMaxVersions(maxVersion);
+			desc.addFamily(coldef);
+		}
+		try {
+			hbaseAdmin.createTable(desc);
+			success = true;
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 		return success;
 	}
@@ -84,7 +92,6 @@ public class HBaseClient {
 		}
 		return deleted;
 	}
-
 
 	/**
 	 * 关闭hbaseAdmin
