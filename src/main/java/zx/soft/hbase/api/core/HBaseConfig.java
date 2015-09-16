@@ -10,10 +10,9 @@ import zx.soft.utils.config.ConfigUtil;
 public class HBaseConfig {
 
 	public static Configuration getZookeeperConf() {
-		org.apache.hadoop.conf.Configuration conf;
 		Properties prop = ConfigUtil.getProps("zookeeper.properties");
 		//在classpath下查找hbase-site.xml文件，如果不存在，则使用默认的hbase-core.xml文件
-		conf = HBaseConfiguration.create();
+		Configuration conf = HBaseConfiguration.create();
 		conf.set("hbase.zookeeper.quorum", prop.getProperty("hbase.zookeeper.quorum"));
 		conf.set("hbase.zookeeper.property.clientPort", prop.getProperty("hbase.zookeeper.property.clientPort"));
 		return conf;
