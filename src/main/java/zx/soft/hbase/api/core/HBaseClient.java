@@ -43,6 +43,32 @@ public class HBaseClient {
 		return success;
 	}
 
+	public boolean createTable(String tableName) throws IOException {
+		boolean success = false;
+		if (!(hbaseAdmin.tableExists(tableName))) {
+			HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(tableName));
+			try {
+				hbaseAdmin.createTable(tableDescriptor);
+				success = true;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return success;
+	}
+
+	public void addFamily(String tableName, String... columnFamilys) throws IOException {
+		for (String columnFamily : columnFamilys) {
+			hbaseAdmin.addColumn(tableName, new HColumnDescriptor(columnFamily));
+		}
+	}
+
+	public void deleteFamily(String tableName, String... columnFamilys) throws IOException {
+		for (String columnFamily : columnFamilys) {
+			hbaseAdmin.deleteColumn(tableName, columnFamily);
+		}
+	}
+
 	/**
 	 * 创建表
 	 * @param tableName　表名

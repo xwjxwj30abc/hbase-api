@@ -52,4 +52,14 @@ public class ObjectTrans {
 		return object;
 	}
 
+	//通过查询获得的Result获取指定列族，标志符的值
+	public static String getValue(String cf, String qualifier, Result result) {
+		String value = null;
+		if (result.containsNonEmptyColumn(cf.getBytes(), qualifier.getBytes())) {
+			Cell cell = result.getColumnLatestCell(cf.getBytes(), qualifier.getBytes());
+			value = new String(CellUtil.cloneValue(cell));
+		}
+		return value;
+	}
+
 }

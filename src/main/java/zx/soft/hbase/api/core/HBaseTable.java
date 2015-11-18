@@ -43,6 +43,24 @@ public class HBaseTable {
 		puts.add(put);
 	}
 
+	public void put(String rowKey, String family, String qualifer, int value) throws IOException {
+		Put put = new Put(rowKey.getBytes());
+		put.add(Bytes.toBytes(family), Bytes.toBytes(qualifer), Bytes.toBytes(value));
+		puts.add(put);
+	}
+
+	public void put(String rowKey, String family, String qualifer, long value) throws IOException {
+		Put put = new Put(rowKey.getBytes());
+		put.add(Bytes.toBytes(family), Bytes.toBytes(qualifer), Bytes.toBytes(value));
+		puts.add(put);
+	}
+
+	public void put(String rowKey, String family, String qualifer, boolean value) throws IOException {
+		Put put = new Put(rowKey.getBytes());
+		put.add(Bytes.toBytes(family), Bytes.toBytes(qualifer), Bytes.toBytes(value));
+		puts.add(put);
+	}
+
 	/**
 	 * 将指定的列和对应的值及时间戳添加到Put实例中
 	 */
@@ -103,7 +121,6 @@ public class HBaseTable {
 	 */
 	public Result get(String rowKey, String family, String qualifier) throws IOException {
 		Get get = new Get(rowKey.getBytes());
-		get.addColumn(Bytes.toBytes(family), Bytes.toBytes(qualifier));
 		Result result = table.get(get);
 		return result;
 	}
