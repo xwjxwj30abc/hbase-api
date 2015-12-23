@@ -18,7 +18,7 @@ public class ObjectTrans {
 
 	//将hbase　Get结果Result转换为T类的对象
 	public static <T> T Result2Object(Result result, Class<T> cls) throws InstantiationException,
-			IllegalAccessException, NoSuchFieldException, SecurityException {
+	IllegalAccessException, NoSuchFieldException, SecurityException {
 
 		List<Cell> cells = result.listCells();
 		T object = cls.newInstance();

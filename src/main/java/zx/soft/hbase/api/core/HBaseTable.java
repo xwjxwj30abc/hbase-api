@@ -55,6 +55,18 @@ public class HBaseTable {
 		puts.add(put);
 	}
 
+	public void put(String rowKey, String family, String qualifer, byte[] value) throws IOException {
+		Put put = new Put(rowKey.getBytes());
+		put.add(Bytes.toBytes(family), Bytes.toBytes(qualifer), value);
+		puts.add(put);
+	}
+
+	public void put(String rowKey, String family, String qualifer, double value) throws IOException {
+		Put put = new Put(rowKey.getBytes());
+		put.add(Bytes.toBytes(family), Bytes.toBytes(qualifer), Bytes.toBytes(value));
+		puts.add(put);
+	}
+
 	public void put(String rowKey, String family, String qualifer, boolean value) throws IOException {
 		Put put = new Put(rowKey.getBytes());
 		put.add(Bytes.toBytes(family), Bytes.toBytes(qualifer), Bytes.toBytes(value));
