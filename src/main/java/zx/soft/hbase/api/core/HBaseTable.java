@@ -86,7 +86,7 @@ public class HBaseTable {
 	 * 插入一个对象到数据表中，对应
 	 */
 	public <T> void putObject(String rowKey, String family, T t) throws InstantiationException, IllegalAccessException,
-			IOException {
+	IOException {
 		Field[] fields = t.getClass().getDeclaredFields();
 		Put put = new Put(Bytes.toBytes(rowKey));
 		for (Field field : fields) {
@@ -104,7 +104,7 @@ public class HBaseTable {
 	 * 插入多行到数据表中
 	 */
 	public <T> void putObjects(List<String> rowKeys, String family, List<T> ts) throws InstantiationException,
-			IllegalAccessException, IOException {
+	IllegalAccessException, IOException {
 		if (rowKeys.size() == ts.size()) {
 			for (int i = 0; i < rowKeys.size(); i++) {
 				this.putObject(rowKeys.get(i), family, ts.get(i));
@@ -116,7 +116,7 @@ public class HBaseTable {
 	 * 获得指定rowKey的对象
 	 */
 	public <T> T getObject(String rowKey, Class<T> cls) throws IOException, InstantiationException,
-			IllegalAccessException, NoSuchFieldException, SecurityException, ParseException {
+	IllegalAccessException, NoSuchFieldException, SecurityException, ParseException {
 		Get get = new Get(Bytes.toBytes(rowKey));
 		Result result = table.get(get);
 		T t = ObjectTrans.Result2Object(result, cls);
@@ -216,6 +216,7 @@ public class HBaseTable {
 	public void execute() {
 		try {
 			table.put(puts);
+			puts.clear();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
